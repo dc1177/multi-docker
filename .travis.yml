@@ -1,0 +1,22 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t dc1177/react-test -f ./client/Dockerfile.dev ./client
+script:
+  - docker run -e CI=true dc1177/react-test npm test -- --watchAll=false
+
+after_success:
+  - docker build -t dc1177/multi-client ./client
+  - docker build -t dc1177/multi-nginx ./nginx
+  - docker build -t dc1177/multi-server ./server
+  - docker build -t dc1177/multi-worker ./worker
+  # Log in to the Docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push dc1177/multi-client
+  - docker push dc1177/multi-nginx
+  - docker push dc1177/multi-server
+  - docker push dc1177/multi-worker
